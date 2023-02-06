@@ -1,4 +1,4 @@
-from django.shortcuts import render
+# from django.shortcuts import render
 import django_filters.rest_framework
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7,6 +7,8 @@ from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer
 from django.db.models import Q
 from django.template import loader
+from rest_framework import permissions
+from rest_framework.permissions import IsAuthenticated
 from django.http import HttpResponse
 from rest_framework import generics
 
@@ -56,13 +58,17 @@ def snippet_detail(request, pk):
 
 class filter_list(generics.ListAPIView):
     serializer_class = SnippetSerializer
-    model = serializer_class.Meta.model
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
-    queryset = model.objects.filter().all()
-    def apply_filters(obj, queryset):
-        """Apply filters to given queryset"""
+    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        user = self.request.user
+        return Snippet.objects.filter(user=user)
 
-        xp = dict(obj.request.GET).get("xp", [])
-        if xp:
-            queryset = queryset.filter(lambda player: obj.calc_player_experience(player,xp[0])) 
-        return queryset 
+class search(generics.ListAPIView):
+    serializer_class = SnippetSerializer
+    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        slug = self.kwargs['pk']
+        return Snippet.objects.filter(slug=slug)
+    # queryset_list = Snippet.objects.all()
+    # filter_set = ['id', 'title', 'code', 'linenos', 'language', 'style']
