@@ -1,15 +1,15 @@
-# from django.shortcuts import render
-import django_filters.rest_framework
+from django.shortcuts import render
+
+# Create your views here.
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer
-from django.db.models import Q
-from django.template import loader
-from rest_framework import permissions
 from rest_framework.permissions import IsAuthenticated
-from django.http import HttpResponse
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+import django_filters.rest_framework
+from rest_framework import permissions
 from rest_framework import generics
 
 @csrf_exempt
@@ -60,15 +60,15 @@ class filter_list(generics.ListAPIView):
     serializer_class = SnippetSerializer
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
     permission_classes = [IsAuthenticated]
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
     def get_queryset(self):
         user = self.request.user
-        return Snippet.objects.filter(user=user)
+        return Snippet.objects.filter(author=user)
 
 class search(generics.ListAPIView):
     serializer_class = SnippetSerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
     def get_queryset(self):
         slug = self.kwargs['pk']
-        return Snippet.objects.filter(slug=slug)
-    # queryset_list = Snippet.objects.all()
-    # filter_set = ['id', 'title', 'code', 'linenos', 'language', 'style']
+        return Snippet.objects.filter(title=slug)

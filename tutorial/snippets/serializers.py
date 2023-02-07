@@ -27,8 +27,7 @@ class SnippetSerializer(serializers.Serializer):
         instance.style = validated_data.get('style', instance.style)
         instance.save()
         return instance
-
-
+        
 class SnippetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Snippet
