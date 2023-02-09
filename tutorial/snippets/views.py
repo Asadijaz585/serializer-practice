@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+from django_filters.rest_framework import DjangoFilterBackend
 # Create your views here.
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -7,9 +7,9 @@ from rest_framework.parsers import JSONParser
 from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-import django_filters.rest_framework
-from rest_framework import permissions
+from django.db.models import Q
+from django.http import HttpResponse
+from django.template import loader
 from rest_framework import generics
 
 @csrf_exempt
@@ -56,19 +56,18 @@ def snippet_detail(request, pk):
         snippet.delete()
         return HttpResponse(status=204)
 
-class filter_list(generics.ListAPIView):
-    serializer_class = SnippetSerializer
-    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
-    def get_queryset(self):
-        user = self.request.user
-        return Snippet.objects.filter(author=user)
+class UserListView(generics.ListAPIView):
+    filter_backends = [DjangoFilterBackend]
 
-class search(generics.ListAPIView):
+class filterList(generics.ListAPIView):
     serializer_class = SnippetSerializer
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
-    def get_queryset(self):
-        slug = self.kwargs['pk']
-        return Snippet.objects.filter(title=slug)
+    filter_backends = [DjangoFilterBackend]
+    queryset = Snippet.objects.all()
+    filterset_fields = ['id', 'title', 'code', 'linenos', 'language', 'style']
+    def testing(request):
+        data = Snippet.objects.filter().values()
+        template = loader.get_template('template.html')
+        context = {
+            'mymembers': data,
+        }
+        return HttpResponse(template.render(context, request))
